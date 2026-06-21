@@ -4,9 +4,6 @@
 name: dev_api
 
 on:
-  push:
-    branches:
-      - dev
   workflow_dispatch:
 
 env:
@@ -17,7 +14,7 @@ jobs:
     permissions:
       id-token: write #This is required for requesting the JWT
       contents: read #This is required for actions/checkout
-    if: github.event.repository.fork == false && github.event_name == 'push'
+    if: github.repository == 'criani/CIPP-API' && github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
 
     steps:

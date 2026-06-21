@@ -1,13 +1,11 @@
 name: Upload Dev zip
 
 on:
-  push:
-    branches:
-      - dev
+  workflow_dispatch:
 
 jobs:
   release:
-    if: github.event.repository.fork == false && github.event_name == 'push'
+    if: github.repository == 'criani/CIPP-API' && github.event_name == 'workflow_dispatch'
     name: Upload to Azure
     runs-on: ubuntu-latest
 

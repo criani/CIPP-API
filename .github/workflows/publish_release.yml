@@ -4,13 +4,15 @@ on:
   push:
     branches:
       - master
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   release:
-    if: github.event.repository.fork == false && github.event_name == 'push'
+    if: github.repository == 'criani/CIPP-API' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     name: Generate Release Notes and Upload to Azure
     runs-on: ubuntu-latest
 
@@ -108,7 +110,6 @@ jobs:
 
       # Create ZIP File in a New Source Directory
       - name: Prepare and Zip Release Files
-        if: env.tag_exists == 'false'
         run: |
           mkdir -p src/releases
           zip -r src/releases/latest.zip . \
@@ -118,7 +119,6 @@ jobs:
 
       # Upload to Azure Blob Storage
       - name: Azure Blob Upload with Destination folder defined
-        if: env.tag_exists == 'false'
         uses: LanceMcCarthy/Action-AzureBlobUpload@v3.3.0
         with:
           connection_string: ${{ secrets.AZURE_CONNECTION_STRING }}

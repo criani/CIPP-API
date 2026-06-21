@@ -4,9 +4,6 @@
 name: Build and deploy Powershell project to Azure Function App - cippjta72
 
 on:
-  push:
-    branches:
-      - dev
   workflow_dispatch:
 
 env:
@@ -14,6 +11,7 @@ env:
 
 jobs:
   deploy:
+    if: github.repository == 'criani/CIPP-API' && github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     
     steps:
