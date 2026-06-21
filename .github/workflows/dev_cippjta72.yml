@@ -21,6 +21,17 @@ jobs:
     steps:
       - name: 'Checkout GitHub Action'
         uses: actions/checkout@v4
+
+      - name: 'Validate Azure Function publish profile'
+        shell: bash
+        env:
+          AZURE_FUNCTIONAPP_PUBLISH_PROFILE: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_1EBE9D73F9EC4528BA666FC934055536 }}
+        run: |
+          if [ -z "$AZURE_FUNCTIONAPP_PUBLISH_PROFILE" ]; then
+            echo "Missing AZUREAPPSERVICE_PUBLISHPROFILE_1EBE9D73F9EC4528BA666FC934055536 repository secret."
+            echo "Add the publish profile XML for prospectorcipp62evl to that exact GitHub Actions secret name."
+            exit 1
+          fi
       
       - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
