@@ -1,4 +1,4 @@
-name: Generate Release Notes and Upload Production to Azure
+name: Generate Release Notes and Deploy Production to Azure
 
 on:
   push:
@@ -13,7 +13,7 @@ permissions:
 jobs:
   release:
     if: github.repository == 'criani/CIPP-API' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    name: Generate Release Notes and Upload to Azure
+    name: Generate Release Notes and Deploy to Azure
     runs-on: ubuntu-latest
 
     steps:
@@ -29,22 +29,28 @@ jobs:
             echo "Error: version_latest.txt not found!"
             exit 1
           fi
+
           VERSION=$(cat version_latest.txt | tr -d '[:space:]')
+
           if [ -z "$VERSION" ]; then
             echo "Error: version_latest.txt is empty after trimming!"
             exit 1
           fi
+
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
 
       - name: Check if Tag Exists
         id: tag_check
         run: |
           git fetch --tags
+
           if git rev-parse "refs/tags/${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
             echo "tag_exists=true" >> $GITHUB_ENV
             echo "Tag ${{ steps.get_version.outputs.version }} already exists. Skipping release creation."
           else
             echo "tag_exists=false" >> $GITHUB_ENV
+            echo "Tag ${{ steps.get_version.outputs.version }} does not exist. Release will be created."
           fi
 
       - name: Get Previous Tag
@@ -69,6 +75,7 @@ jobs:
             };
 
             const previousTag = '${{ steps.previous_tag.outputs.previous_tag }}';
+
             if (previousTag) {
               params.previous_tag_name = previousTag;
             }
@@ -96,6 +103,7 @@ jobs:
           VERSION=$(cat version_latest.txt | tr -d '[:space:]')
           SHORT_SHA="${GITHUB_SHA::7}"
           echo "{\"version\": \"${VERSION}\", \"commit\": \"${SHORT_SHA}\"}" > version.json
+          cat version.json
 
       - name: Build and stage modules
         shell: pwsh
@@ -104,10 +112,24 @@ jobs:
       - name: Prepare and Zip Release Files
         run: |
           mkdir -p src/releases
+
           zip -r src/releases/latest.zip . \
             --exclude "./src/releases/*" \
-            --exclude ".*" \
-            --exclude ".*/**"
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude ".gitignore" \
+            --exclude ".gitattributes"
+
+      - name: Verify Zip Contents
+        run: |
+          echo "Checking version_latest.txt inside zip:"
+          unzip -p src/releases/latest.zip version_latest.txt
+
+          echo "Checking host.json exists at zip root:"
+          unzip -l src/releases/latest.zip | grep -E "^[^/]*[[:space:]]+[0-9-]+[[:space:]]+[0-9:]+[[:space:]]+host.json$|host.json"
+
+          echo "Checking package size:"
+          ls -lh src/releases/latest.zip
 
       - name: Azure Blob Upload with Destination folder defined
         uses: LanceMcCarthy/Action-AzureBlobUpload@v3.3.0
@@ -117,3 +139,15 @@ jobs:
           source_folder: src/releases/
           destination_folder: /
           delete_if_exists: true
+
+      - name: Deploy Zip to Azure Function App
+        uses: Azure/functions-action@v1
+        with:
+          app-name: prospectorcipp62evl
+          package: src/releases/latest.zip
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+
+      - name: Deployment Summary
+        run: |
+          echo "Deployed CIPP API version ${{ steps.get_version.outputs.version }} to prospectorcipp62evl"
+          echo "Package: src/releases/latest.zip"
