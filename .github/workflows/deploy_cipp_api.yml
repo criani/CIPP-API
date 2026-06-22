@@ -16,7 +16,7 @@ permissions:
 
 env:
   AZURE_FUNCTIONAPP_NAME: prospectorcipp62evl
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: "."
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: src/releases/latest.zip
 
 jobs:
   deploy:
@@ -26,6 +26,26 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Create version.json
+        shell: bash
+        run: |
+          VERSION=$(cat ./version_latest.txt | tr -d '[:space:]')
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "{\"version\": \"${VERSION}\", \"commit\": \"${SHORT_SHA}\"}" > version.json
+
+      - name: Build and stage modules
+        shell: pwsh
+        run: ./Tools/Build-DevApiModules.ps1
+
+      - name: Prepare deployment package
+        shell: bash
+        run: |
+          mkdir -p src/releases
+          zip -r "${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}" . \
+            --exclude "./src/releases/*" \
+            --exclude ".*" \
+            --exclude ".*/**"
 
       - name: Validate Azure Function publish profile
         shell: bash
