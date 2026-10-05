@@ -201,7 +201,7 @@ function Invoke-ExecIntuneGraphRequest {
         '^deviceManagement/windowsAutopilotDeploymentProfiles(?:\([^)]*\)|/[^?]+)?$',
 
         # Intune policy sets
-        '^deviceAppManagement/policySets(?:\([^)]*\)|/[^?]+)?$'
+        '^deviceManagement/deviceHealthScripts(?:\([^)]*\)|/[^?]+)?$',
     )
 
     $BlockedEndpointPatterns = @(
@@ -216,7 +216,6 @@ function Invoke-ExecIntuneGraphRequest {
         '^policies(?:/|$)',
         '^deviceManagement/managedDevices(?:/|$)',
         '^deviceManagement/detectedApps(?:/|$)',
-        '^deviceManagement/deviceHealthScripts(?:/|$)',
         '^deviceManagement/deviceManagementScripts(?:/|$)',
         '^deviceManagement/virtualEndpoint(?:/|$)',
         '^deviceManagement/reports(?:/|$)',
