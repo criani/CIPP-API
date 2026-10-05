@@ -201,8 +201,12 @@ function Invoke-ExecIntuneGraphRequest {
         '^deviceManagement/windowsAutopilotDeploymentProfiles(?:\([^)]*\)|/[^?]+)?$',
 
         # Intune policy sets
-        '^deviceManagement/deviceHealthScripts(?:\([^)]*\)|/[^?]+)?$',
+        '^deviceAppManagement/policySets(?:\([^)]*\)|/[^?]+)?$',
+
+        # Remediation scripts
+        '^deviceManagement/deviceHealthScripts(?:\([^)]*\)|/[^?]+)?$'
     )
+
 
     $BlockedEndpointPatterns = @(
         '^users(?:/|$)',
